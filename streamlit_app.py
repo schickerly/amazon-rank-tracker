@@ -38,7 +38,8 @@ if st.button("Check Rankings") and asin and keywords:
         )
 
         data = response.json()
-        st.json(data)
+        st.json(data)  # Optional: See raw response
+
 
         task = data.get('tasks', [])[0]
 
