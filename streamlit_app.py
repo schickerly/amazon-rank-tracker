@@ -6,7 +6,7 @@ client = RestClient("your_login", "your_password")
 # Prepare request data
 post_data = dict()
 post_data[len(post_data)] = dict(
-    asin="B00R92CL5E",             # A known valid ASIN
+    asin="B01G3SP5ZM",             # A known valid ASIN
     location_name="United States",
     language_name="English"
 )
