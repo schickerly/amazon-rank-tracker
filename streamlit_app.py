@@ -34,7 +34,7 @@ if st.button("Check Rankings") and asin and keywords:
         response = requests.post(
             "https://api.dataforseo.com/v3/amazon/products/search/live",
             headers=headers,
-            json=post_data  # ✅ REMOVE the brackets [] here!
+            json=[post_data]  # ✅ list of tasks!
         )
 
         data = response.json()
