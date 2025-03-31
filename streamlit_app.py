@@ -34,6 +34,7 @@ if st.button("Check Rankings") and asin and keywords:
         )
 
         data = response.json()
+        st.json(data)
         task = data.get('tasks', [])[0]
 
         if task.get('result'):
@@ -60,4 +61,4 @@ if st.button("Check Rankings") and asin and keywords:
     df = pd.DataFrame(results)
     st.write(df)
 
-    st.json(data)
+    
