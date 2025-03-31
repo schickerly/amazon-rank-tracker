@@ -46,8 +46,19 @@ if st.button("Check Rankings") and asin and keywords:
         # st.json(data)
 
         # Safely handle response
-        task = data.get('tasks', [{}])[0]
-        keyword_results = task.get('result', [{}])[0].get('items', [])
+        task_list = data.get("tasks")
+        if not task_list:
+            st.error("No results returned. Check if your keyword is too obscure or your request failed.")
+            st.stop()
+
+        task = task_list[0]
+        result_list = task.get("result")
+        if not result_list:
+            st.error("No products found for this keyword.")
+            st.stop()
+
+        keyword_results = result_list[0].get("items", [])
+
 
         rank = "-"
         for i, item in enumerate(keyword_results):
