@@ -1,73 +1,57 @@
 import streamlit as st
 import requests
 import base64
-import pandas as pd
+import json
 
-st.title("Amazon Keyword Rank Checker (MVP)")
+st.title("🔥 Hardcoded Amazon Keyword Test")
 
-# Get API credentials from secrets
+# Pull credentials from Streamlit secrets
 api_login = st.secrets["dataforseo"]["api_login"]
 api_password = st.secrets["dataforseo"]["api_password"]
 
-# User inputs
-asin = st.text_input("Your Product ASIN")
-keywords_raw = st.text_area("Enter Keywords (one per line)")
-keywords = [k.strip() for k in keywords_raw.splitlines() if k.strip()]
+# Hardcoded keyword + settings
+post_data = [{
+    "language_name": "English",
+    "amazon_domain": "amazon.com",
+    "keyword": "vanilla soy candles highly scented",
+    "depth": 100
+}]
 
-if st.button("Check Rankings") and asin and keywords:
-    st.write("Checking ranks...")
-    results = []
+# Basic Auth
+auth_string = f"{api_login}:{api_password}"
+b64_auth = base64.b64encode(auth_string.encode()).decode()
+headers = {
+    "Authorization": f"Basic {b64_auth}",
+    "Content-Type": "application/json"
+}
 
-    for kw in keywords:
-        post_data = {
-            "language_name": "English",
-            "amazon_domain": "amazon.com",  # US marketplace
-            "keyword": kw,
-            "depth": 100
-        }
+# Make the API request
+response = requests.post(
+    "https://api.dataforseo.com/v3/dataforseo_labs/amazon/search_products/live",
+    headers=headers,
+    json=post_data
+)
 
-        # Basic Auth
-        auth_string = f"{api_login}:{api_password}"
-        b64_auth = base64.b64encode(auth_string.encode()).decode()
-        headers = {
-            "Authorization": f"Basic {b64_auth}",
-            "Content-Type": "application/json"
-        }
+# Parse and show response
+data = response.json()
 
-        # Correct endpoint for Amazon product search
-        response = requests.post(
-            "https://api.dataforseo.com/v3/dataforseo_labs/amazon/search_products/live",
-            headers=headers,
-            json=[post_data]
-        )
+# Pretty print the full API response
+st.subheader("Raw API Response")
+st.json(data)
 
-        data = response.json()
-        # Debug raw output
-        # st.json(data)
+# Show top results (if present)
+task_list = data.get("tasks")
+if not task_list:
+    st.error("No data returned — check your API login, keyword, or credit balance.")
+    st.stop()
 
-        # Safely handle response
-        task_list = data.get("tasks")
-        if not task_list:
-            st.error("No results returned. Check if your keyword is too obscure or your request failed.")
-            st.stop()
+items = task_list[0].get("result", [{}])[0].get("items", [])
+if not items:
+    st.warning("No products found in the search results.")
+    st.stop()
 
-        task = task_list[0]
-        result_list = task.get("result")
-        if not result_list:
-            st.error("No products found for this keyword.")
-            st.stop()
-
-        keyword_results = result_list[0].get("items", [])
-
-
-        rank = "-"
-        for i, item in enumerate(keyword_results):
-            if item.get("asin") == asin:
-                rank = i + 1
-                break
-
-        results.append({"Keyword": kw, "Rank": rank})
-
-    df = pd.DataFrame(results)
-    st.subheader("Keyword Rankings:")
-    st.dataframe(df)
+st.subheader("Top Results (ASINs + Titles)")
+for i, item in enumerate(items[:10], start=1):
+    asin = item.get("asin", "N/A")
+    title = item.get("title", "No Title")
+    st.write(f"{i}. **{asin}** — {title}")
