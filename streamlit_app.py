@@ -19,22 +19,27 @@ if st.button("Check Rankings") and asin and keywords:
     for kw in keywords:
         post_data = {
             "language_name": "English",
-            "location_code": 2840,  # United States
+            "location_code": 2840,
             "keyword": kw,
             "depth": 100
         }
+
         auth_string = f"{api_login}:{api_password}"
         b64_auth = base64.b64encode(auth_string.encode()).decode()
-        headers = {"Authorization": f"Basic {b64_auth}"}
+        headers = {
+            "Authorization": f"Basic {b64_auth}",
+            "Content-Type": "application/json"
+        }
 
         response = requests.post(
             "https://api.dataforseo.com/v3/amazon/products/search/live",
-            json=[post_data],
-            headers=headers
+            headers=headers,
+            json=post_data  # ✅ REMOVE the brackets [] here!
         )
 
         data = response.json()
         st.json(data)
+
         task = data.get('tasks', [])[0]
 
         if task.get('result'):
