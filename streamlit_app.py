@@ -32,7 +32,7 @@ if st.button("Check Rankings") and asin and keywords:
         }
 
         response = requests.post(
-            "https://api.dataforseo.com/v3/amazon/products/search/live",
+            "hhttps://api.dataforseo.com/v3/dataforseo_labs/amazon/search_products/live",
             headers=headers,
             json=[post_data]  # ✅ list of tasks!
         )
