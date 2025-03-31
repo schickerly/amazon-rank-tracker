@@ -28,7 +28,7 @@ if st.button("Check Rankings") and asin and keywords:
         headers = {"Authorization": f"Basic {b64_auth}"}
 
         response = requests.post(
-            "https://api.dataforseo.com/v3/amazon/products/search",
+            "https://api.dataforseo.com/v3/amazon/products/search/live",
             json=[post_data],
             headers=headers
         )
