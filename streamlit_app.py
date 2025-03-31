@@ -19,7 +19,7 @@ if st.button("Check Rankings") and asin and keywords:
     for kw in keywords:
         post_data = {
             "language_name": "English",
-            "location_code": 2840,
+            "amazon_domain": "amazon.com",
             "keyword": kw,
             "depth": 100
         }
