@@ -1,12 +1,14 @@
+import streamlit as st
 import requests
 import base64
 import json
 
-# API credentials
-api_login = "your_login"
-api_password = "your_password"
+st.title("🧪 DataForSEO Amazon Labs Test")
 
-# Payload: simple test keyword
+api_login = st.secrets["dataforseo"]["api_login"]
+api_password = st.secrets["dataforseo"]["api_password"]
+
+# ✅ Hardcoded payload
 post_data = [
     {
         "language_name": "English",
@@ -16,7 +18,7 @@ post_data = [
     }
 ]
 
-# Headers with base64 auth
+# ✅ Auth headers
 auth_string = f"{api_login}:{api_password}"
 b64_auth = base64.b64encode(auth_string.encode()).decode()
 headers = {
@@ -24,11 +26,21 @@ headers = {
     "Content-Type": "application/json"
 }
 
-# ✅ Double-confirmed endpoint
+# ✅ Correct endpoint
 url = "https://api.dataforseo.com/v3/dataforseo_labs/amazon/search_products/live"
 
-# Make request
-response = requests.post(url, headers=headers, json=post_data)
+# Run only when user clicks
+if st.button("Run Test Request"):
+    try:
+        response = requests.post(url, headers=headers, json=post_data)
+        data = response.json()
+        st.subheader("Raw API Response:")
+        st.json(data)
 
-# Print results
-print(json.dumps(response.json(), indent=2))
+        # Safety check
+        if not data.get("tasks"):
+            st.error("⚠️ No 'tasks' in response. Confirm API access is enabled and funded.")
+        else:
+            st.success("✅ Request successful! You have task results.")
+    except Exception as e:
+        st.error(f"Request failed: {e}")
