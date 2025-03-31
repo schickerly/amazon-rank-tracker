@@ -2,32 +2,33 @@ import streamlit as st
 import requests
 import base64
 import pandas as pd
+import json
 
-st.title("🔍 Amazon Top Ranked Keywords for ASIN")
+st.title("🔍 Amazon Ranked Keywords (DataForSEO Labs)")
 
-# Get credentials
+# Load credentials from secrets
 api_login = st.secrets["dataforseo"]["api_login"]
 api_password = st.secrets["dataforseo"]["api_password"]
 
-# ASIN input
-asin = st.text_input("Enter your Amazon ASIN")
-limit = st.slider("How many keywords to return?", 1, 50, 10)
+# User inputs
+asin = st.text_input("Enter your Amazon ASIN", value="019005476X")
+limit = st.slider("Number of keywords to return", 1, 100, 10)
 
-if st.button("Get Ranked Keywords") and asin:
-    st.info("📡 Fetching ranked keywords...")
+if st.button("Fetch Ranked Keywords") and asin:
+    st.info("Fetching ranked keywords from DataForSEO Labs...")
 
-    # Build payload
+    # Build the POST payload
     post_data = [
         {
             "asin": asin,
-            "location_code": 2840,  # United States
+            "location_code": 2840,
             "language_code": "en",
-            "limit": limit,
-            "order_by": ["keyword_data.keyword,asc"]
+            "ignore_synonyms": False,
+            "limit": limit
         }
     ]
 
-    # Encode API credentials
+    # Auth headers
     auth_string = f"{api_login}:{api_password}"
     b64_auth = base64.b64encode(auth_string.encode()).decode()
     headers = {
@@ -35,31 +36,34 @@ if st.button("Get Ranked Keywords") and asin:
         "Content-Type": "application/json"
     }
 
-    # Make request
     try:
+        # Make the request using 'data' not 'json' (required by this endpoint!)
         response = requests.post(
-            "https://api.dataforseo.com/v3/amazon/ranked_keywords/live",
+            "https://api.dataforseo.com/v3/dataforseo_labs/amazon/ranked_keywords/live",
             headers=headers,
-            json=post_data
+            data=json.dumps(post_data)
         )
 
         data = response.json()
         st.subheader("📦 Raw API Response")
         st.json(data)
 
-        task = data.get("tasks", [{}])[0]
-        result_list = task.get("result", [{}])[0].get("items", [])
+        task_list = data.get("tasks")
+        if not task_list:
+            st.error("No tasks returned. This may mean your account isn’t yet approved for Labs.")
+            st.stop()
 
-        # Parse results into table
+        result_items = task_list[0].get("result", [{}])[0].get("items", [])
         keywords = []
-        for item in result_list:
+
+        for item in result_items:
             kw = item.get("keyword_data", {}).get("keyword", "N/A")
-            pos = item.get("ranked_serp_element", {}).get("position", "N/A")
-            keywords.append({"Keyword": kw, "Position": pos})
+            rank = item.get("rank_group", "N/A")
+            keywords.append({"Keyword": kw, "Rank Group": rank})
 
         df = pd.DataFrame(keywords)
         st.subheader("📊 Top Ranked Keywords")
         st.dataframe(df)
 
     except Exception as e:
-        st.error(f"❌ Error: {e}")
+        st.error(f"Error: {e}")
