@@ -33,22 +33,22 @@ if st.button("Check Rankings") and asin and keywords:
             headers=headers
         )
 
-     data = response.json()
-task = data.get('tasks', [])[0]
+        data = response.json()
+        task = data.get('tasks', [])[0]
 
-if task.get('result'):
-    keyword_results = task['result'][0].get('items', [])
-else:
-    keyword_results = []
+        if task.get('result'):
+            keyword_results = task['result'][0].get('items', [])
+        else:
+            keyword_results = []
 
+        # default to "-" if not found
+        rank = "-"
+        for i, item in enumerate(keyword_results):
+            if item.get("asin") == asin:
+                rank = i + 1
+                break
 
-# default to "-" if not found
-rank = "-"
-for i, item in enumerate(keyword_results):
-    if item.get("asin") == asin:
-        rank = i + 1
-        break
-
+        
         rank = "-"
         for i, item in enumerate(keyword_results):
             if item.get("asin") == asin:
