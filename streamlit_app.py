@@ -44,21 +44,27 @@ if st.button("Fetch Ranked Keywords") and asin:
         )
 
         data = response.json()
-
         st.subheader("📦 Raw API Response")
         st.json(data)
 
+        # Extract task results
         task_list = data.get("tasks", [])
-        if not task_list or task_list[0].get("result") is None:
-            st.error("No results returned. Please check the ASIN or try again.")
+        if not task_list:
+            st.error("❌ No tasks returned.")
             st.stop()
 
-        # 🔥 Grab item name from first result
+        result = task_list[0].get("result", [])
+        if not result or not result[0].get("items"):
+            st.warning("No keyword rankings found.")
+            st.stop()
+
+        result_items = result[0]["items"]
+
+        # 🔥 Display item title from first result
         item_title = result_items[0].get("ranked_serp_element", {}).get("serp_item", {}).get("title", "Product Title Not Found")
         st.markdown(f"### 🕯️ Product: **{item_title}**")
-        
-        result_items = task_list[0]["result"][0].get("items", [])
 
+        # Build table
         rows = []
         for item in result_items:
             kw = item.get("keyword_data", {}).get("keyword", "N/A")
