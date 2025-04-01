@@ -6,29 +6,28 @@ import json
 
 st.title("📈 Amazon Ranked Keywords via DataForSEO Labs")
 
-# Streamlit secrets
+# Load credentials
 api_login = st.secrets["dataforseo"]["api_login"]
 api_password = st.secrets["dataforseo"]["api_password"]
 
-# Inputs
+# ASIN input
 asin = st.text_input("Enter your Amazon ASIN", value="B01G3SP5ZM")
-limit = st.slider("How many top keywords do you want to see?", min_value=1, max_value=100, value=10)
 
 if st.button("Fetch Ranked Keywords") and asin:
-    st.info(f"📡 Fetching ranked keywords for ASIN: {asin}...")
+    st.info(f"📡 Fetching up to 1000 ranked keywords for ASIN: {asin}...")
 
-    # Payload
+    # Request body
     post_data = [
         {
             "asin": asin,
             "location_code": 2840,
             "language_code": "en",
             "ignore_synonyms": False,
-            "limit": limit
+            "limit": 1000
         }
     ]
 
-    # Headers
+    # Auth headers
     auth_string = f"{api_login}:{api_password}"
     b64_auth = base64.b64encode(auth_string.encode()).decode()
     headers = {
@@ -47,10 +46,9 @@ if st.button("Fetch Ranked Keywords") and asin:
         st.subheader("📦 Raw API Response")
         st.json(data)
 
-        # Extract task results
         task_list = data.get("tasks", [])
         if not task_list:
-            st.error("❌ No tasks returned.")
+            st.error("❌ No task returned.")
             st.stop()
 
         result = task_list[0].get("result", [])
@@ -60,24 +58,45 @@ if st.button("Fetch Ranked Keywords") and asin:
 
         result_items = result[0]["items"]
 
-        # 🔥 Display item title from first result
-        item_title = result_items[0].get("ranked_serp_element", {}).get("serp_item", {}).get("title", "Product Title Not Found")
-        st.markdown(f"### 🕯️ Product: **{item_title}**")
+        # 🔥 Grab item summary info from first result
+        first_item = result_items[0].get("ranked_serp_element", {}).get("serp_item", {})
+        item_title = first_item.get("title", "N/A")
+        item_price = first_item.get("price_from", "N/A")
+        item_rating = first_item.get("rating", {}).get("value", "N/A")
+        item_reviews = first_item.get("rating", {}).get("votes_count", "N/A")
+        item_asin = first_item.get("asin", "N/A")
 
-        # Build table
+        st.markdown(f"""
+        ### 🕯️ Product Overview
+        **Title:** {item_title}  
+        **ASIN:** `{item_asin}`  
+        **Price:** ${item_price}  
+        **Rating:** ⭐ {item_rating} ({item_reviews} reviews)
+        """)
+
+        # Build and filter rows
         rows = []
         for item in result_items:
             kw = item.get("keyword_data", {}).get("keyword", "N/A")
-            vol = item.get("keyword_data", {}).get("keyword_info", {}).get("search_volume", "N/A")
+            vol = item.get("keyword_data", {}).get("keyword_info", {}).get("search_volume", 0)
             rank = item.get("ranked_serp_element", {}).get("serp_item", {}).get("rank_group", "N/A")
+            is_choice = item.get("ranked_serp_element", {}).get("serp_item", {}).get("is_amazon_choice", False)
+            is_best = item.get("ranked_serp_element", {}).get("serp_item", {}).get("is_best_seller", False)
+
             rows.append({
                 "Keyword": kw,
                 "Search Volume": vol,
-                "Rank Group": rank
+                "Rank": rank,
+                "Amazon Choice": "✅" if is_choice else "❌",
+                "Best Seller": "✅" if is_best else "❌"
             })
 
         df = pd.DataFrame(rows)
-        st.subheader("📊 Keyword Rankings")
+
+        # Sort by search volume descending
+        df = df.sort_values(by="Search Volume", ascending=False)
+
+        st.subheader("📊 Top Ranked Keywords")
         st.dataframe(df)
 
     except Exception as e:
