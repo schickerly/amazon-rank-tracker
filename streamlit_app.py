@@ -53,6 +53,10 @@ if st.button("Fetch Ranked Keywords") and asin:
             st.error("No results returned. Please check the ASIN or try again.")
             st.stop()
 
+        # 🔥 Grab item name from first result
+        item_title = result_items[0].get("ranked_serp_element", {}).get("serp_item", {}).get("title", "Product Title Not Found")
+        st.markdown(f"### 🕯️ Product: **{item_title}**")
+        
         result_items = task_list[0]["result"][0].get("items", [])
 
         rows = []
