@@ -1,22 +1,25 @@
 from client import RestClient
+import streamlit as st
 
-# Use your actual DataForSEO credentials here
-client = RestClient("your_login", "your_password")
+st.title("🔍 DataForSEO Labs Ranked Keywords Test")
 
-# Prepare request data
-post_data = dict()
-post_data[len(post_data)] = dict(
-    asin="B01G3SP5ZM",             # A known valid ASIN
-    location_name="United States",
-    language_name="English"
-)
+api_login = st.secrets["dataforseo"]["api_login"]
+api_password = st.secrets["dataforseo"]["api_password"]
 
-# Make the API call
-response = client.post("/v3/dataforseo_labs/amazon/ranked_keywords/live", post_data)
+if st.button("Run Test"):
+    client = RestClient(api_login, api_password)
 
-# Show results
-if response["status_code"] == 20000:
-    print("✅ Success!")
-    print(response)
-else:
-    print(f"❌ Error. Code: {response['status_code']} - Message: {response['status_message']}")
+    post_data = dict()
+    post_data[len(post_data)] = dict(
+        asin="B00R92CL5E",  # known good ASIN
+        location_name="United States",
+        language_name="English"
+    )
+
+    response = client.post("/v3/dataforseo_labs/amazon/ranked_keywords/live", post_data)
+
+    if response["status_code"] == 20000:
+        st.success("✅ Success!")
+        st.json(response)
+    else:
+        st.error(f"❌ Error {response['status_code']}: {response['status_message']}")
